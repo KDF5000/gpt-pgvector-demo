@@ -1,7 +1,6 @@
 import { Index, Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { useThrottleFn } from 'solidjs-use'
 import GPT3Tokenizer from 'gpt3-tokenizer'
-import { generateSignature } from '@/utils/auth'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
 import ErrorMessageItem from './ErrorMessageItem'
@@ -118,7 +117,6 @@ export default () => {
     setLoading(true)
     setCurrentAssistantMessage('')
     setCurrentError(null)
-    const storagePassword = localStorage.getItem('pass')
     try {
       const controller = new AbortController()
       setController(controller)
@@ -205,12 +203,6 @@ export default () => {
         method: 'POST',
         body: JSON.stringify({
           messages: requestMessageList,
-          time: t0,
-          pass: storagePassword,
-          sign: await generateSignature({
-            t: t0,
-            m: requestMessageList?.[requestMessageList.length - 1]?.content || '',
-          }),
         }),
         signal: controller.signal,
       })
@@ -292,7 +284,7 @@ export default () => {
       if (lastMessage.role === 'assistant')
         setMessageList(messageList().slice(0, -1))
 
-      requestWithLatestMessage()
+      requestWithLatestMessage(lastMessage.content)
     }
   }
 
