@@ -1,11 +1,50 @@
 import { Index, Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { useThrottleFn } from 'solidjs-use'
+import GPT3Tokenizer from 'gpt3-tokenizer'
 import { generateSignature } from '@/utils/auth'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
-import SystemRoleSettings from './SystemRoleSettings'
 import ErrorMessageItem from './ErrorMessageItem'
 import type { ChatMessage, ErrorMessage } from '@/types'
+
+const systemContent = `You are a helpful assistant. When given CONTEXT you answer questions using only that information,
+and you always format your output in markdown. You include code snippets if relevant. If you are unsure and the answer
+is not explicitly written in the CONTEXT provided, you say
+"Sorry, I don't know how to help with that."  If the CONTEXT includes 
+source URLs include them under a SOURCES heading at the end of your response. Always include all of the relevant source urls 
+from the CONTEXT, but never list a URL more than once (ignore trailing forward slashes when comparing for uniqueness). Never include URLs that are not in the CONTEXT sections. Never make up URLs`
+
+const userContent = `CONTEXT:
+Next.js is a React framework for creating production-ready web applications. It provides a variety of methods for fetching data, a built-in router, and a Next.js Compiler for transforming and minifying JavaScript code. It also includes a built-in Image Component and Automatic Image Optimization for resizing, optimizing, and serving images in modern formats.
+SOURCE: nextjs.org/docs/faq
+QUESTION: 
+what is nextjs?    
+`
+
+const assistantContent = `Next.js is a framework for building production-ready web applications using React. It offers various data fetching options, comes equipped with an integrated router, and features a Next.js compiler for transforming and minifying JavaScript. Additionally, it has an inbuilt Image Component and Automatic Image Optimization that helps resize, optimize, and deliver images in modern formats.
+\`\`\`js
+function HomePage() {
+  return <div>Welcome to Next.js!</div>
+}
+export default HomePage
+\`\`\`
+SOURCES:
+https://nextjs.org/docs/faq`
+
+const promptMessages: ChatMessage[] = [
+  {
+    role: 'system',
+    content: systemContent,
+  },
+  {
+    role: 'user',
+    content: userContent,
+  },
+  {
+    role: 'assistant',
+    content: assistantContent,
+  },
+]
 
 export default () => {
   let inputRef: HTMLTextAreaElement
@@ -33,9 +72,6 @@ export default () => {
       if (localStorage.getItem('messageList'))
         setMessageList(JSON.parse(localStorage.getItem('messageList')))
 
-      if (localStorage.getItem('systemRoleSettings'))
-        setCurrentSystemRoleSettings(localStorage.getItem('systemRoleSettings'))
-
       if (localStorage.getItem('stickToBottom') === 'stick')
         setStick(true)
     } catch (err) {
@@ -50,7 +86,6 @@ export default () => {
 
   const handleBeforeUnload = () => {
     localStorage.setItem('messageList', JSON.stringify(messageList()))
-    localStorage.setItem('systemRoleSettings', currentSystemRoleSettings())
     isStick() ? localStorage.setItem('stickToBottom', 'stick') : localStorage.removeItem('stickToBottom')
   }
 
@@ -67,7 +102,7 @@ export default () => {
         content: inputValue,
       },
     ])
-    requestWithLatestMessage()
+    requestWithLatestMessage(inputValue)
     instantToBottom()
   }
 
@@ -79,7 +114,7 @@ export default () => {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })
   }
 
-  const requestWithLatestMessage = async() => {
+  const requestWithLatestMessage = async(inputValue: string) => {
     setLoading(true)
     setCurrentAssistantMessage('')
     setCurrentError(null)
@@ -87,22 +122,93 @@ export default () => {
     try {
       const controller = new AbortController()
       setController(controller)
-      const requestMessageList = [...messageList()]
-      if (currentSystemRoleSettings()) {
-        requestMessageList.unshift({
-          role: 'system',
-          content: currentSystemRoleSettings(),
-        })
+
+      const t0 = Date.now()
+      // 1. get embeding
+      const embedingResponse = await fetch('/api/embedding', {
+        method: 'POST',
+        body: JSON.stringify({
+          message: inputValue,
+        }),
+      })
+
+      if (!embedingResponse.ok) {
+        const error = await embedingResponse.json()
+        console.error(error.error)
+        setCurrentError(error.error)
+        throw new Error('Request failed')
       }
-      const timestamp = Date.now()
+      const { embedding } = await embedingResponse.json()
+      if (!embedding)
+        throw new Error('No embedding')
+      const t1 = Date.now()
+      console.log('generate embedding cost ', (t1 - t0))
+
+      // 2. search embeding from pg
+      const searchResponse = await fetch('/api/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          embedding,
+          similarity: 0.1,
+          limit: 3,
+        }),
+      })
+
+      if (!searchResponse.ok) {
+        const error = await searchResponse.json()
+        console.error(error.error)
+        setCurrentError(error.error)
+        throw new Error('Request failed')
+      }
+      const t2 = Date.now()
+      console.log('search embedding cost ', (t2 - t1))
+
+      const { documents } = await searchResponse.json()
+      const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
+      let tokenCount = 0
+      let contextText = ''
+      // Concat matched documents
+      if (documents) {
+        for (let i = 0; i < documents.length; i++) {
+          const document = documents[i]
+          const content = document.content
+          const url = document.url
+          const encoded = tokenizer.encode(content)
+          tokenCount += encoded.text.length
+
+          // Limit context to max 1500 tokens (configurable)
+          console.log('document: ', i, ', tokenCount: ', tokenCount)
+          if (tokenCount > 3500)
+            break
+
+          contextText += `${content.trim()}\nSOURCE: ${url}\n---\n`
+        }
+      }
+
+      const userMessage = `CONTEXT:
+      ${contextText}
+      
+      USER QUESTION: 
+      ${inputValue}  
+      `
+
+      // 3. send to gpt
+      const requestMessageList = [
+        ...promptMessages,
+        {
+          role: 'user',
+          content: userMessage,
+        },
+      ]
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         body: JSON.stringify({
           messages: requestMessageList,
-          time: timestamp,
+          time: t0,
           pass: storagePassword,
           sign: await generateSignature({
-            t: timestamp,
+            t: t0,
             m: requestMessageList?.[requestMessageList.length - 1]?.content || '',
           }),
         }),
@@ -117,6 +223,9 @@ export default () => {
       const data = response.body
       if (!data)
         throw new Error('No data')
+
+      const t3 = Date.now()
+      console.log('gpt request cost ', (t3 - t2))
 
       const reader = data.getReader()
       const decoder = new TextDecoder('utf-8')
@@ -199,13 +308,13 @@ export default () => {
 
   return (
     <div my-6>
-      <SystemRoleSettings
+      {/* <SystemRoleSettings
         canEdit={() => messageList().length === 0}
         systemRoleEditing={systemRoleEditing}
         setSystemRoleEditing={setSystemRoleEditing}
         currentSystemRoleSettings={currentSystemRoleSettings}
         setCurrentSystemRoleSettings={setCurrentSystemRoleSettings}
-      />
+      /> */}
       <Index each={messageList()}>
         {(message, index) => (
           <MessageItem

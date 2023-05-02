@@ -4,6 +4,18 @@ import type { ChatMessage } from '@/types'
 
 const model = import.meta.env.OPENAI_API_MODEL || 'gpt-3.5-turbo'
 
+export const generateEmbeddingPayload = (apiKey: string, input: string): RequestInit & { dispatcher?: any } => ({
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`,
+  },
+  method: 'POST',
+  body: JSON.stringify({
+    input,
+    model: 'text-embedding-ada-002',
+  }),
+})
+
 export const generatePayload = (apiKey: string, messages: ChatMessage[]): RequestInit & { dispatcher?: any } => ({
   headers: {
     'Content-Type': 'application/json',
