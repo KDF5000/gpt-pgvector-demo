@@ -48,7 +48,7 @@ const promptMessages: ChatMessage[] = [
 
 export default () => {
   let inputRef: HTMLTextAreaElement
-  const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('')
+  // const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('')
   const [systemRoleEditing, setSystemRoleEditing] = createSignal(false)
   const [messageList, setMessageList] = createSignal<ChatMessage[]>([])
   const [currentError, setCurrentError] = createSignal<ErrorMessage>()

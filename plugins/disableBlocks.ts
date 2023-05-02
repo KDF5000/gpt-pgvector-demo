@@ -2,6 +2,7 @@ export default function plugin(platform?: string) {
   const transform = (code: string, id: string) => {
     if (id.includes('pages/api/generate.ts')
         || id.includes('pages/api/embedding.ts')
+        || id.includes('pages/api/search.ts')
         || id.includes('utils/db.ts')) {
       return {
         code: code.replace(/^.*?#vercel-disable-blocks([\s\S]+?)#vercel-end.*?$/gm, ''),
