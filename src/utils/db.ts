@@ -1,10 +1,10 @@
 // #vercel-disable-blocks
-import ws from 'ws'
+// import ws from 'ws'
 // #vercel-end
 import { Pool, neonConfig } from '@neondatabase/serverless'
 
 // #vercel-disable-blocks
-neonConfig.webSocketConstructor = ws
+// neonConfig.webSocketConstructor = ws
 // #vercel-end
 
 const URL = import.meta.env.NEON_DATABASE_URL
