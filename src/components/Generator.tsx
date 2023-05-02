@@ -125,30 +125,30 @@ export default () => {
 
       const t0 = Date.now()
       // 1. get embeding
-      const embedingResponse = await fetch('/api/embedding', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: inputValue,
-        }),
-      })
+      // const embedingResponse = await fetch('/api/embedding', {
+      //   method: 'POST',
+      //   body: JSON.stringify({
+      //     message: inputValue,
+      //   }),
+      // })
 
-      if (!embedingResponse.ok) {
-        const error = await embedingResponse.json()
-        console.error(error.error)
-        setCurrentError(error.error)
-        throw new Error('Request failed')
-      }
-      const { embedding } = await embedingResponse.json()
-      if (!embedding)
-        throw new Error('No embedding')
-      const t1 = Date.now()
-      console.log('generate embedding cost ', (t1 - t0))
+      // if (!embedingResponse.ok) {
+      //   const error = await embedingResponse.json()
+      //   console.error(error.error)
+      //   setCurrentError(error.error)
+      //   throw new Error('Request failed')
+      // }
+      // const { embedding } = await embedingResponse.json()
+      // if (!embedding)
+      //   throw new Error('No embedding')
+      // const t1 = Date.now()
+      // console.log('generate embedding cost ', (t1 - t0))
 
       // 2. search embeding from pg
       const searchResponse = await fetch('/api/search', {
         method: 'POST',
         body: JSON.stringify({
-          embedding,
+          message: inputValue,
           similarity: 0.1,
           limit: 3,
         }),
@@ -161,7 +161,7 @@ export default () => {
         throw new Error('Request failed')
       }
       const t2 = Date.now()
-      console.log('search embedding cost ', (t2 - t1))
+      console.log('search embedding cost ', (t2 - t0))
 
       const { documents } = await searchResponse.json()
       const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
