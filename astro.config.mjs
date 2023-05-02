@@ -4,7 +4,8 @@ import solidJs from '@astrojs/solid-js'
 
 import node from '@astrojs/node'
 import { VitePWA } from 'vite-plugin-pwa'
-import vercel from '@astrojs/vercel/edge'
+// import vercel from '@astrojs/vercel/edge'
+import vercel from '@astrojs/vercel/serverless'
 import netlify from '@astrojs/netlify/edge-functions'
 import disableBlocks from './plugins/disableBlocks'
 
@@ -35,9 +36,9 @@ export default defineConfig({
       process.env.OUTPUT !== 'netlify' && VitePWA({
         registerType: 'autoUpdate',
         manifest: {
-          name: 'ChatGPT-API Demo',
-          short_name: 'ChatGPT Demo',
-          description: 'A demo repo based on OpenAI API',
+          name: 'GPT PGVector Demo',
+          short_name: 'GPT PGVector Demo',
+          description: 'A demo repo based on OpenAI API and pgvector',
           theme_color: '#212129',
           background_color: '#ffffff',
           icons: [
