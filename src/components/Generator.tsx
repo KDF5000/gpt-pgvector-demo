@@ -121,7 +121,6 @@ export default () => {
       const controller = new AbortController()
       setController(controller)
 
-      const t0 = Date.now()
       // 1. get embeding
       // const embedingResponse = await fetch('/api/embedding', {
       //   method: 'POST',
@@ -158,8 +157,6 @@ export default () => {
         setCurrentError(error.error)
         throw new Error('Request failed')
       }
-      const t2 = Date.now()
-      console.log('search embedding cost ', (t2 - t0))
 
       const { documents } = await searchResponse.json()
       const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
@@ -175,7 +172,6 @@ export default () => {
           tokenCount += encoded.text.length
 
           // Limit context to max 1500 tokens (configurable)
-          console.log('document: ', i, ', tokenCount: ', tokenCount)
           if (tokenCount > 3500)
             break
 
@@ -190,6 +186,7 @@ export default () => {
       ${inputValue}  
       `
 
+      const t0 = Date.now()
       // 3. send to gpt
       const requestMessageList = [
         ...promptMessages,
@@ -216,8 +213,8 @@ export default () => {
       if (!data)
         throw new Error('No data')
 
-      const t3 = Date.now()
-      console.log('gpt request cost ', (t3 - t2))
+      const t1 = Date.now()
+      console.log('gpt request cost ', (t1 - t0))
 
       const reader = data.getReader()
       const decoder = new TextDecoder('utf-8')

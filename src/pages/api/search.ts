@@ -22,6 +22,7 @@ export const post: APIRoute = async(context) => {
     }), { status: 400 })
   }
 
+  const t0 = Date.now()
   // 1. generate embedding
   const initOptions = generateEmbeddingPayload(apiKey, message)
   // #vercel-disable-blocks
@@ -43,11 +44,16 @@ export const post: APIRoute = async(context) => {
 
   const embeddingData = await embeddingResponse.json()
   const [{ embedding }] = embeddingData.data
+  const t1 = Date.now()
+  console.log('generate embedding cost ', t1 - t0)
 
   const stm = `SELECT * FROM match_documents('${JSON.stringify(embedding)}', ${similarity}, ${limit})`
   // const documents = await sql`SELECT * FROM match_documents(${JSON.stringify(embedding)}, ${similarity}, ${limit})`;
   const { rows: documents } = await pool.query(stm)
   //   const documents = await sql`SELECT * FROM match_documents(${JSON.stringify(embedding)}, ${similarity}, ${limit})`
+  const t2 = Date.now()
+  console.log('search embedding cost ', t2 - t1)
+
   return {
     body: JSON.stringify({
       documents,
