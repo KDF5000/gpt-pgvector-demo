@@ -121,26 +121,6 @@ export default () => {
       const controller = new AbortController()
       setController(controller)
 
-      // 1. get embeding
-      // const embedingResponse = await fetch('/api/embedding', {
-      //   method: 'POST',
-      //   body: JSON.stringify({
-      //     message: inputValue,
-      //   }),
-      // })
-
-      // if (!embedingResponse.ok) {
-      //   const error = await embedingResponse.json()
-      //   console.error(error.error)
-      //   setCurrentError(error.error)
-      //   throw new Error('Request failed')
-      // }
-      // const { embedding } = await embedingResponse.json()
-      // if (!embedding)
-      //   throw new Error('No embedding')
-      // const t1 = Date.now()
-      // console.log('generate embedding cost ', (t1 - t0))
-
       // 2. search embeding from pg
       const searchResponse = await fetch('/api/search', {
         method: 'POST',
@@ -227,10 +207,8 @@ export default () => {
           if (char === '\n' && currentAssistantMessage().endsWith('\n'))
             continue
 
-          if (char) {
-            console.log(char)
+          if (char)
             setCurrentAssistantMessage(currentAssistantMessage() + char)
-          }
 
           isStick() && instantToBottom()
         }
@@ -299,13 +277,6 @@ export default () => {
 
   return (
     <div my-6>
-      {/* <SystemRoleSettings
-        canEdit={() => messageList().length === 0}
-        systemRoleEditing={systemRoleEditing}
-        setSystemRoleEditing={setSystemRoleEditing}
-        currentSystemRoleSettings={currentSystemRoleSettings}
-        setCurrentSystemRoleSettings={setCurrentSystemRoleSettings}
-      /> */}
       <Index each={messageList()}>
         {(message, index) => (
           <MessageItem
