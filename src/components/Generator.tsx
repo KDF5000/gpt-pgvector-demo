@@ -141,7 +141,7 @@ https://nextjs.org/docs/faq`
       const { documents } = await searchResponse.json()
       const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
       let tokenCount = 0
-      const contextText = ''
+      let contextText = ''
       // Concat matched documents
       if (documents) {
         for (let i = 0; i < documents.length; i++) {
