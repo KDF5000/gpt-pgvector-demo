@@ -121,43 +121,43 @@ export default () => {
       const controller = new AbortController()
       setController(controller)
 
-      // 2. search embeding from pg
-      const searchResponse = await fetch('/api/search', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: inputValue,
-          similarity: 0.1,
-          limit: 3,
-        }),
-      })
+      // // 2. search embeding from pg
+      // const searchResponse = await fetch('/api/search', {
+      //   method: 'POST',
+      //   body: JSON.stringify({
+      //     message: inputValue,
+      //     similarity: 0.1,
+      //     limit: 3,
+      //   }),
+      // })
 
-      if (!searchResponse.ok) {
-        const error = await searchResponse.json()
-        console.error(error.error)
-        setCurrentError(error.error)
-        throw new Error('Request failed')
-      }
+      // if (!searchResponse.ok) {
+      //   const error = await searchResponse.json()
+      //   console.error(error.error)
+      //   setCurrentError(error.error)
+      //   throw new Error('Request failed')
+      // }
 
-      const { documents } = await searchResponse.json()
-      const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
-      let tokenCount = 0
-      let contextText = ''
-      // Concat matched documents
-      if (documents) {
-        for (let i = 0; i < documents.length; i++) {
-          const document = documents[i]
-          const content = document.content
-          const url = document.url
-          const encoded = tokenizer.encode(content)
-          tokenCount += encoded.text.length
+      // const { documents } = await searchResponse.json()
+      // const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
+      // let tokenCount = 0
+      const contextText = ''
+      // // Concat matched documents
+      // if (documents) {
+      //   for (let i = 0; i < documents.length; i++) {
+      //     const document = documents[i]
+      //     const content = document.content
+      //     const url = document.url
+      //     const encoded = tokenizer.encode(content)
+      //     tokenCount += encoded.text.length
 
-          // Limit context to max 1500 tokens (configurable)
-          if (tokenCount > 3500)
-            break
+      //     // Limit context to max 1500 tokens (configurable)
+      //     if (tokenCount > 3500)
+      //       break
 
-          contextText += `${content.trim()}\nSOURCE: ${url}\n---\n`
-        }
-      }
+      //     contextText += `${content.trim()}\nSOURCE: ${url}\n---\n`
+      //   }
+      // }
 
       const userMessage = `CONTEXT:
       ${contextText}
