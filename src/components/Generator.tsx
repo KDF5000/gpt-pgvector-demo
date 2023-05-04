@@ -227,8 +227,10 @@ export default () => {
           if (char === '\n' && currentAssistantMessage().endsWith('\n'))
             continue
 
-          if (char)
+          if (char) {
+            console.log(char)
             setCurrentAssistantMessage(currentAssistantMessage() + char)
+          }
 
           isStick() && instantToBottom()
         }
