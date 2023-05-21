@@ -8,8 +8,6 @@ import type { ChatMessage, ErrorMessage } from '@/types'
 
 export default () => {
   let inputRef: HTMLTextAreaElement
-  // const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('')
-  const [systemRoleEditing, setSystemRoleEditing] = createSignal(false)
   const [messageList, setMessageList] = createSignal<ChatMessage[]>([])
   const [currentError, setCurrentError] = createSignal<ErrorMessage>()
   const [currentAssistantMessage, setCurrentAssistantMessage] = createSignal('')
@@ -78,44 +76,6 @@ export default () => {
     setLoading(true)
     setCurrentAssistantMessage('')
     setCurrentError(null)
-    const systemContent = `You are a helpful assistant. When given CONTEXT you answer questions using only that information,
-and you always format your output in markdown. You include code snippets if relevant. If you are unsure and the answer
-is not explicitly written in the CONTEXT provided, you say
-"Sorry, I don't know how to help with that."  If the CONTEXT includes
-source URLs include them under a SOURCES heading at the end of your response. Always include all of the relevant source urls
-from the CONTEXT, but never list a URL more than once (ignore trailing forward slashes when comparing for uniqueness). Never include URLs that are not in the CONTEXT sections. Never make up URLs`
-
-    const userContent = `CONTEXT:
-Next.js is a React framework for creating production-ready web applications. It provides a variety of methods for fetching data, a built-in router, and a Next.js Compiler for transforming and minifying JavaScript code. It also includes a built-in Image Component and Automatic Image Optimization for resizing, optimizing, and serving images in modern formats.
-SOURCE: nextjs.org/docs/faq
-QUESTION:
-what is nextjs?
-`
-
-    const assistantContent = `Next.js is a framework for building production-ready web applications using React. It offers various data fetching options, comes equipped with an integrated router, and features a Next.js compiler for transforming and minifying JavaScript. Additionally, it has an inbuilt Image Component and Automatic Image Optimization that helps resize, optimize, and deliver images in modern formats.
-\`\`\`js
-function HomePage() {
-  return <div>Welcome to Next.js!</div>
-}
-export default HomePage
-\`\`\`
-SOURCES:
-https://nextjs.org/docs/faq`
-
-    const promptMessages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: systemContent,
-      },
-      {
-        role: 'user',
-        content: userContent,
-      },
-      {
-        role: 'assistant',
-        content: assistantContent,
-      },
-    ]
 
     try {
       const controller = new AbortController()
@@ -169,7 +129,7 @@ https://nextjs.org/docs/faq`
       const t0 = Date.now()
       // 3. send to gpt
       const requestMessageList = [
-        ...promptMessages,
+        // ...promptMessages,
         {
           role: 'user',
           content: userMessage,
@@ -303,10 +263,10 @@ https://nextjs.org/docs/faq`
           </div>
         )}
       >
-        <div class="gen-text-wrapper" class:op-50={systemRoleEditing()}>
+        <div class="gen-text-wrapper" class:op-50={false}>
           <textarea
             ref={inputRef!}
-            disabled={systemRoleEditing()}
+            disabled={false}
             onKeyDown={handleKeydown}
             placeholder="Enter something..."
             autocomplete="off"
@@ -318,10 +278,10 @@ https://nextjs.org/docs/faq`
             rows="1"
             class="gen-textarea"
           />
-          <button onClick={handleButtonClick} disabled={systemRoleEditing()} gen-slate-btn>
+          <button onClick={handleButtonClick} disabled={false} gen-slate-btn>
             Send
           </button>
-          <button title="Clear" onClick={clear} disabled={systemRoleEditing()} gen-slate-btn>
+          <button title="Clear" onClick={clear} disabled={false} gen-slate-btn>
             <IconClear />
           </button>
         </div>
