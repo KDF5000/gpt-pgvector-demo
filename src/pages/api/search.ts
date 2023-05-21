@@ -48,9 +48,7 @@ export const post: APIRoute = async(context) => {
   console.log('generate embedding cost ', t1 - t0)
 
   const stm = `SELECT * FROM match_documents('${JSON.stringify(embedding)}', ${similarity}, ${limit})`
-  // const documents = await sql`SELECT * FROM match_documents(${JSON.stringify(embedding)}, ${similarity}, ${limit})`;
   const { rows: documents } = await pool.query(stm)
-  //   const documents = await sql`SELECT * FROM match_documents(${JSON.stringify(embedding)}, ${similarity}, ${limit})`
   const t2 = Date.now()
   console.log('search embedding cost ', t2 - t1)
 

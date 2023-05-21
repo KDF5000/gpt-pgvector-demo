@@ -81,6 +81,31 @@ export default () => {
       const controller = new AbortController()
       setController(controller)
 
+      // 1. get prompt
+      let promptStr = ''
+      if (localStorage.getItem('prompt')) {
+        promptStr = localStorage.getItem('prompt')
+      } else {
+        const resp = await fetch('/api/prompt', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: 'mysql-gpt',
+          }),
+        })
+
+        if (!resp.ok) {
+          const error = await resp.json()
+          console.error(error.error)
+          setCurrentError(error.error)
+          throw new Error('Request failed')
+        }
+
+        const { prompt } = await resp.json()
+        promptStr = prompt.prompt
+      }
+
+      const promptMessages = JSON.parse(promptStr)
+      console.log(promptMessages)
       // 2. search embeding from pg
       const searchResponse = await fetch('/api/search', {
         method: 'POST',
@@ -129,7 +154,7 @@ export default () => {
       const t0 = Date.now()
       // 3. send to gpt
       const requestMessageList = [
-        // ...promptMessages,
+        ...promptMessages,
         {
           role: 'user',
           content: userMessage,
